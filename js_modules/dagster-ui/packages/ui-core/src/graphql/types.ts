@@ -493,11 +493,6 @@ export type AssetNode = {
   type: Maybe<ListDagsterType | NullableDagsterType | RegularDagsterType>;
 };
 
-export type AssetNodeAssetChecksOrErrorArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  pipeline?: InputMaybe<PipelineSelector>;
-};
-
 export type AssetNodeAssetMaterializationUsedDataArgs = {
   timestampMillis: Scalars['String']['input'];
 };

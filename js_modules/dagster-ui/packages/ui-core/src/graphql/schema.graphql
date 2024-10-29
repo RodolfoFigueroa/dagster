@@ -680,7 +680,7 @@ type AssetNode {
   hasMaterializePermission: Boolean!
   hasReportRunlessAssetEventPermission: Boolean!
   hasAssetChecks: Boolean!
-  assetChecksOrError(limit: Int, pipeline: PipelineSelector): AssetChecksOrError!
+  assetChecksOrError: AssetChecksOrError!
   currentAutoMaterializeEvaluationId: Int
   targetingInstigators: [Instigator!]!
 }

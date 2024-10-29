@@ -23,12 +23,12 @@ from dagster_graphql_tests.graphql.graphql_context_test_suite import (
 )
 
 GET_ASSET_CHECK_DETAILS_QUERY = """
-query AssetNodeChecksLimitQuery($assetKeys: [AssetKeyInput!], $limit: Int) {
+query AssetNodeChecksLimitQuery($assetKeys: [AssetKeyInput!]) {
     assetNodes(assetKeys: $assetKeys) {
         assetKey {
             path
         }
-        assetChecksOrError(limit: $limit) {
+        assetChecksOrError {
             ... on AssetChecks {
                 checks {
                     name
@@ -45,22 +45,6 @@ query AssetNodeChecksLimitQuery($assetKeys: [AssetKeyInput!], $limit: Int) {
 }
 """
 
-GET_ASSET_CHECK_NAMES_QUERY = """
-query AssetNodeChecksLimitQuery($assetKeys: [AssetKeyInput!], $limit: Int, $pipelineSelector: PipelineSelector) {
-    assetNodes(assetKeys: $assetKeys, pipeline: $pipelineSelector) {
-        assetKey {
-            path
-        }
-        assetChecksOrError(limit: $limit, pipeline: $pipelineSelector) {
-            ... on AssetChecks {
-                checks {
-                    name
-                }
-            }
-        }
-    }
-}
-"""
 
 GET_ASSET_CHECK_HISTORY_WITH_ID = """
 query GetAssetChecksQuery($assetKey: AssetKeyInput!, $checkName: String!, $limit: Int!, $cursor: String) {
@@ -332,86 +316,6 @@ class TestAssetChecks(ExecutingGraphQLContextTestMatrix):
                         ]
                     },
                 }
-            ]
-        }
-
-    def test_asset_check_asset_node_limit(self, graphql_context: WorkspaceRequestContext):
-        res = execute_dagster_graphql(graphql_context, GET_ASSET_CHECK_NAMES_QUERY)
-        with_checks = [
-            node for node in res.data["assetNodes"] if node["assetChecksOrError"] != {"checks": []}
-        ]
-        assert with_checks == [
-            {
-                "assetKey": {"path": ["asset_1"]},
-                "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-            },
-            {
-                "assetKey": {"path": ["check_in_op_asset"]},
-                "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-            },
-            {
-                "assetKey": {"path": ["one"]},
-                "assetChecksOrError": {
-                    "checks": [{"name": "my_check"}, {"name": "my_other_check"}]
-                },
-            },
-        ]
-
-        res = execute_dagster_graphql(
-            graphql_context, GET_ASSET_CHECK_NAMES_QUERY, variables={"limit": 1}
-        )
-        with_checks = [
-            node for node in res.data["assetNodes"] if node["assetChecksOrError"] != {"checks": []}
-        ]
-        assert with_checks == [
-            {
-                "assetKey": {"path": ["asset_1"]},
-                "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-            },
-            {
-                "assetKey": {"path": ["check_in_op_asset"]},
-                "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-            },
-            {
-                "assetKey": {"path": ["one"]},
-                "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-            },
-        ]
-
-    def test_asset_check_asset_node_job_selection(self, graphql_context: WorkspaceRequestContext):
-        res = execute_dagster_graphql(
-            graphql_context,
-            GET_ASSET_CHECK_NAMES_QUERY,
-            variables={
-                "pipelineSelector": infer_job_selector(
-                    graphql_context, "fail_partition_materialization_job"
-                )
-            },
-        )
-        assert res.data == {
-            "assetNodes": [
-                {
-                    "assetKey": {"path": ["fail_partition_materialization"]},
-                    "assetChecksOrError": {"checks": []},
-                }
-            ]
-        }
-
-        res = execute_dagster_graphql(
-            graphql_context,
-            GET_ASSET_CHECK_NAMES_QUERY,
-            variables={"pipelineSelector": infer_job_selector(graphql_context, "asset_check_job")},
-        )
-        assert res.data == {
-            "assetNodes": [
-                {
-                    "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-                    "assetKey": {"path": ["asset_1"]},
-                },
-                {
-                    "assetChecksOrError": {"checks": [{"name": "my_check"}]},
-                    "assetKey": {"path": ["check_in_op_asset"]},
-                },
             ]
         }
 
